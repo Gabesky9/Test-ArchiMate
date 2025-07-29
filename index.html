@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Archimate Diagram Export Sample</title>
     <!-- Using Font Awesome for the element icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+   
     
     <style>
         /* --- General Layout & Typography --- */
@@ -298,7 +298,7 @@
                     <span>Customer DB</span>
                 </div>
                 
-                <div class="archimate-element grouping" style="top: 100px; left: 275px; width: 500px; height: 270px;">
+                <div class="archimate-element grouping" id="el-online" style="top: 100px; left: 275px; width: 500px; height: 270px;">
                     <div class="group-label">Online Application</div>
                 </div>
 
@@ -390,6 +390,12 @@
                     type: 'Technology Service',
                     layer: 'Technology',
                     documentation: 'The database system that stores all customer, product, and order information. Provides data storage and retrieval services.'
+                },
+                'el-online': {
+                    name: 'Online Application',
+                    type: 'Grouping',
+                    layer: 'Application',
+                    documentation: 'This grouping represents the core set of application components and services that collectively form the customer-facing e-commerce platform. Webshop UI, Order Service, Payment Gateway.'
                 }
             };
 

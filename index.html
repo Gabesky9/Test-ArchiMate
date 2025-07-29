@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Archimate Diagram Export Sample</title>
+    <!-- Using Font Awesome for the element icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        /* --- General Layout & Typography --- */
+        :root {
+            --color-business: #ffffb3;
+            --color-business-border: #cccc90;
+            --color-application: #b3d9ff;
+            --color-application-border: #90b3d9;
+            --color-technology: #c2f0c2;
+            --color-technology-border: #99d699;
+            --color-primary-text: #333;
+            --color-secondary-text: #666;
+            --color-border-light: #e0e0e0;
+            --color-bg-light: #f8f9fa;
+            --color-highlight: #007bff;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.1);
+            --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            background-color: #fff;
+            color: var(--color-primary-text);
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        header {
+            background-color: #333;
+            color: white;
+            padding: 10px 20px;
+            font-size: 1.2em;
+            box-shadow: var(--shadow-md);
+            z-index: 10;
+        }
+
+        .main-container {
+            display: flex;
+            flex-grow: 1;
+            overflow: hidden;
+        }
+
+        /* --- Sidebar Panels (Navigator & Properties) --- */
+        .sidebar {
+            flex: 0 0 280px;
+            background-color: var(--color-bg-light);
+            border-right: 1px solid var(--color-border-light);
+            padding: 20px;
+            overflow-y: auto;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar h2 {
+            margin-top: 0;
+            font-size: 1.1em;
+            color: var(--color-secondary-text);
+            border-bottom: 1px solid var(--color-border-light);
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+
+        /* Navigator Specific */
+        #navigator-panel ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        #navigator-panel li {
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-bottom: 5px;
+            transition: background-color 0.2s;
+        }
+        #navigator-panel li:hover {
+            background-color: #e9ecef;
+        }
+        #navigator-panel li.active {
+            background-color: var(--color-highlight);
+            color: white;
+            font-weight: bold;
+        }
+
+        /* Properties Panel Specific */
+        #properties-placeholder {
+            color: var(--color-secondary-text);
+            font-style: italic;
+        }
+        #properties-content.hidden {
+            display: none;
+        }
+        #properties-content h3 {
+            margin-top: 0;
+            font-size: 1.4em;
+            color: var(--color-primary-text);
+        }
+        #properties-content .property {
+            margin-bottom: 15px;
+        }
+        #properties-content .property-label {
+            font-weight: bold;
+            display: block;
+            margin-bottom: 4px;
+            font-size: 0.9em;
+            color: var(--color-secondary-text);
+        }
+        #properties-content .property-value {
+            font-size: 1em;
+            background-color: #fff;
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid var(--color-border-light);
+        }
+        #properties-content .property-doc {
+            white-space: pre-wrap; /* preserves formatting */
+            line-height: 1.5;
+        }
+
+
+        /* --- Main Diagram Canvas --- */
+        .diagram-container {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            background-color: #e9ecef;
+            padding: 20px;
+        }
+        
+        .diagram-canvas {
+            position: relative; /* Crucial for absolute positioning of elements */
+            width: 100%;
+            height: 100%;
+            background-color: white;
+            background-image:
+                linear-gradient(rgba(0,0,0,0.08) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0,0,0,0.08) 1px, transparent 1px);
+            background-size: 20px 20px;
+            border: 1px solid var(--color-border-light);
+            box-shadow: var(--shadow-md);
+            border-radius: 5px;
+            overflow: hidden; /* Important for SVG to fit */
+        }
+
+        /* --- Archimate Elements --- */
+        .archimate-element {
+            position: absolute; /* This is how exported diagrams are positioned */
+            min-width: 140px;
+            min-height: 60px;
+            padding: 10px;
+            padding-top: 25px; /* Space for the name at the top */
+            border: 1px solid black;
+            box-shadow: var(--shadow-sm);
+            text-align: center;
+            font-size: 14px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+            user-select: none;
+        }
+        
+        .archimate-element:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+            border-width: 2px;
+        }
+
+        .archimate-element.selected {
+            border: 2px solid var(--color-highlight);
+            box-shadow: 0 0 10px rgba(0,123,255,0.5);
+            transform: scale(1.02);
+        }
+
+        /* Element Icons (Font Awesome) */
+        .archimate-element i {
+            position: absolute;
+            top: 6px;
+            right: 8px;
+            font-size: 14px;
+            color: var(--color-secondary-text);
+        }
+
+        /* Layer-specific colors */
+        .business-layer { background-color: var(--color-business); border-color: var(--color-business-border); }
+        .application-layer { background-color: var(--color-application); border-color: var(--color-application-border); }
+        .technology-layer { background-color: var(--color-technology); border-color: var(--color-technology-border); }
+        
+        .grouping {
+            background: none;
+            border: 2px dashed #aaa;
+            align-items: flex-start;
+        }
+        .grouping .group-label {
+            position: absolute;
+            top: -1px;
+            left: -1px;
+            background-color: white;
+            padding: 2px 8px;
+            font-size: 12px;
+            font-weight: normal;
+            border-right: 2px dashed #aaa;
+            border-bottom: 2px dashed #aaa;
+        }
+
+
+        /* --- SVG Relationships --- */
+        .diagram-canvas svg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none; /* Allows clicks to pass through to elements below */
+            z-index: 1; /* Sit on top of elements but below their interactive parts */
+        }
+        
+        .archimate-relationship {
+            stroke: #333;
+            stroke-width: 1.5;
+            fill: none;
+            transition: all 0.2s ease;
+        }
+
+        .archimate-relationship:hover {
+             stroke-width: 3;
+        }
+
+        .archimate-relationship.highlight {
+            stroke: var(--color-highlight);
+            stroke-width: 3;
+        }
+
+        .archimate-relationship.composition { stroke-dasharray: 6 4; }
+        .archimate-relationship.realization { stroke-dasharray: 8 4; }
+
+        /* SVG Marker Arrowheads */
+        .arrow-head { fill: #333; }
+        .arrow-head-highlight { fill: var(--color-highlight); }
+
+    </style>
+</head>
+<body>
+
+    <header>
+        Archimate Model Export
+    </header>
+
+    <div class="main-container">
+        <!-- LEFT: Navigator Panel -->
+        <aside class="sidebar" id="navigator-panel">
+            <h2>Views</h2>
+            <ul>
+                <li class="active">E-commerce Platform Overview</li>
+                <li>Infrastructure View</li>
+                <li>Business Process View</li>
+            </ul>
+        </aside>
+
+        <!-- MIDDLE: Diagram Canvas -->
+        <main class="diagram-container">
+            <div class="diagram-canvas" id="diagram-canvas">
+
+                <!-- Archimate Elements: Placed with absolute positioning -->
+                <div class="archimate-element business-layer" id="el-customer" style="top: 150px; left: 50px;">
+                    <i class="fa-solid fa-user"></i>
+                    <span>Customer</span>
+                </div>
+
+                <div class="archimate-element application-layer" id="el-web-shop" style="top: 150px; left: 300px;">
+                    <i class="fa-solid fa-display"></i>
+                    <span>Web Shop UI</span>
+                </div>
+                
+                <div class="archimate-element application-layer" id="el-order-service" style="top: 150px; left: 550px;">
+                    <i class="fa-solid fa-server"></i>
+                    <span>Order Service</span>
+                </div>
+
+                <div class="archimate-element application-layer" id="el-payment-gateway" style="top: 300px; left: 550px;">
+                     <i class="fa-solid fa-money-check-dollar"></i>
+                    <span>Payment Gateway</span>
+                </div>
+
+                <div class="archimate-element technology-layer" id="el-database" style="top: 150px; left: 800px;">
+                    <i class="fa-solid fa-database"></i>
+                    <span>Customer DB</span>
+                </div>
+                
+                <div class="archimate-element grouping" style="top: 100px; left: 275px; width: 500px; height: 270px;">
+                    <div class="group-label">Online Application</div>
+                </div>
+
+                <!-- SVG for drawing relationship lines and arrows -->
+                <svg>
+                    <!-- Arrowhead Definitions -->
+                    <defs>
+                        <!-- Triggering/Flow -->
+                        <marker id="arrow-triggering" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                            <path d="M 0 0 L 10 5 L 0 10 z" class="arrow-head"></path>
+                        </marker>
+                        <marker id="arrow-triggering-highlight" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                            <path d="M 0 0 L 10 5 L 0 10 z" class="arrow-head-highlight"></path>
+                        </marker>
+
+                        <!-- Realization -->
+                        <marker id="arrow-realization" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+                            <path d="M 0 0 L 10 5 L 0 10 L 2 5 z" fill="white" stroke="#333" stroke-width="1"></path>
+                        </marker>
+                        <marker id="arrow-realization-highlight" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+                            <path d="M 0 0 L 10 5 L 0 10 L 2 5 z" fill="white" stroke="var(--color-highlight)" stroke-width="1.5"></path>
+                        </marker>
+                    </defs>
+
+                    <!-- Relationship Lines -->
+                    <line class="archimate-relationship" data-source="el-customer" data-target="el-web-shop" x1="190" y1="185" x2="300" y2="185" marker-end="url(#arrow-triggering)"></line>
+                    <line class="archimate-relationship" data-source="el-web-shop" data-target="el-order-service" x1="440" y1="185" x2="550" y2="185" marker-end="url(#arrow-triggering)"></line>
+                    <line class="archimate-relationship composition" data-source="el-order-service" data-target="el-payment-gateway" x1="620" y1="220" x2="620" y2="300" marker-end="url(#arrow-triggering)"></line>
+                    <line class="archimate-relationship realization" data-source="el-order-service" data-target="el-database" x1="690" y1="185" x2="800" y2="185" marker-end="url(#arrow-realization)"></line>
+                </svg>
+
+            </div>
+        </main>
+
+        <!-- RIGHT: Properties Panel -->
+        <aside class="sidebar" id="properties-panel">
+            <h2>Properties</h2>
+            <p id="properties-placeholder">Select an element to view its details.</p>
+            <div id="properties-content" class="hidden">
+                <h3 id="prop-name"></h3>
+                <div class="property">
+                    <span class="property-label">Type</span>
+                    <span id="prop-type" class="property-value"></span>
+                </div>
+                 <div class="property">
+                    <span class="property-label">Layer</span>
+                    <span id="prop-layer" class="property-value"></span>
+                </div>
+                <div class="property">
+                    <span class="property-label">Documentation</span>
+                    <p id="prop-doc" class="property-value property-doc"></p>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+
+            // --- DATA STORE ---
+            // In a real application, this would come from a JSON file or API
+            const elementData = {
+                'el-customer': {
+                    name: 'Customer',
+                    type: 'Business Actor',
+                    layer: 'Business',
+                    documentation: 'An individual or organization that consumes the services of the e-commerce platform.'
+                },
+                'el-web-shop': {
+                    name: 'Web Shop UI',
+                    type: 'Application Component',
+                    layer: 'Application',
+                    documentation: 'The front-end user interface that customers interact with. It provides product catalogs, shopping cart functionality, and account management.'
+                },
+                'el-order-service': {
+                    name: 'Order Service',
+                    type: 'Application Service',
+                    layer: 'Application',
+                    documentation: 'A backend service responsible for processing orders, managing inventory, and coordinating with other services like payment and shipping.'
+                },
+                'el-payment-gateway': {
+                    name: 'Payment Gateway',
+                    type: 'Application Component',
+                    layer: 'Application',
+                    documentation: 'An external or internal component that securely handles payment processing via credit cards, PayPal, etc.'
+                },
+                'el-database': {
+                    name: 'Customer DB',
+                    type: 'Technology Service',
+                    layer: 'Technology',
+                    documentation: 'The database system that stores all customer, product, and order information. Provides data storage and retrieval services.'
+                }
+            };
+
+            // --- DOM ELEMENT REFERENCES ---
+            const canvas = document.getElementById('diagram-canvas');
+            const elements = document.querySelectorAll('.archimate-element');
+            const relationships = document.querySelectorAll('.archimate-relationship');
+            const propertiesPanel = document.getElementById('properties-content');
+            const propertiesPlaceholder = document.getElementById('properties-placeholder');
+            
+            // --- CORE FUNCTIONS ---
+            
+            /**
+             * Clears all selections from elements and relationships.
+             */
+            function clearSelection() {
+                // Deselect all elements
+                elements.forEach(el => el.classList.remove('selected'));
+                
+                // Unhighlight all relationships
+                relationships.forEach(rel => {
+                    rel.classList.remove('highlight');
+                    const markerId = rel.getAttribute('marker-end').replace('-highlight', '');
+                    rel.setAttribute('marker-end', markerId);
+                });
+
+                // Hide properties panel
+                propertiesPanel.classList.add('hidden');
+                propertiesPlaceholder.style.display = 'block';
+            }
+
+            /**
+             * Updates the properties panel with data for the selected element.
+             * @param {string} elementId - The ID of the element to display.
+             */
+            function updatePropertiesPanel(elementId) {
+                const data = elementData[elementId];
+                if (!data) return;
+
+                document.getElementById('prop-name').textContent = data.name;
+                document.getElementById('prop-type').textContent = data.type;
+                document.getElementById('prop-layer').textContent = data.layer;
+                document.getElementById('prop-doc').textContent = data.documentation;
+
+                propertiesPlaceholder.style.display = 'none';
+                propertiesPanel.classList.remove('hidden');
+            }
+
+            /**
+             * Highlights relationships connected to the selected element.
+             * @param {string} elementId - The ID of the selected element.
+             */
+            function highlightRelationships(elementId) {
+                relationships.forEach(rel => {
+                    const source = rel.dataset.source;
+                    const target = rel.dataset.target;
+                    
+                    if (source === elementId || target === elementId) {
+                        rel.classList.add('highlight');
+                        // Switch to the highlighted arrowhead
+                        const markerId = rel.getAttribute('marker-end');
+                        if (markerId && !markerId.includes('-highlight')) {
+                            rel.setAttribute('marker-end', markerId.replace(')', '-highlight)'));
+                        }
+                    }
+                });
+            }
+
+            // --- EVENT LISTENERS ---
+
+            // Handle clicking on an Archimate element
+            elements.forEach(element => {
+                element.addEventListener('click', (event) => {
+                    event.stopPropagation(); // Prevent canvas click from firing
+                    
+                    const selectedId = element.id;
+                    const isAlreadySelected = element.classList.contains('selected');
+                    
+                    clearSelection();
+                    
+                    if (!isAlreadySelected) {
+                        // Select the new element
+                        element.classList.add('selected');
+                        // Update the side panel
+                        updatePropertiesPanel(selectedId);
+                        // Highlight its relationships
+                        highlightRelationships(selectedId);
+                    }
+                });
+            });
+
+            // Handle clicking on the canvas background to deselect
+            canvas.addEventListener('click', () => {
+                clearSelection();
+            });
+
+        });
+    </script>
+
+</body>
+</html>

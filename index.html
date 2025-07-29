@@ -1,11 +1,11 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Archimate Diagram Export Sample</title>
-    <!-- Using Font Awesome for the element icons -->
-   
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
         /* --- General Layout & Typography --- */
@@ -258,7 +258,6 @@
     </header>
 
     <div class="main-container">
-        <!-- LEFT: Navigator Panel -->
         <aside class="sidebar" id="navigator-panel">
             <h2>Views</h2>
             <ul>
@@ -268,11 +267,9 @@
             </ul>
         </aside>
 
-        <!-- MIDDLE: Diagram Canvas -->
         <main class="diagram-container">
             <div class="diagram-canvas" id="diagram-canvas">
 
-                <!-- Archimate Elements: Placed with absolute positioning -->
                 <div class="archimate-element business-layer" id="el-customer" style="top: 150px; left: 50px;">
                     <i class="fa-solid fa-user"></i>
                     <span>Customer</span>
@@ -293,20 +290,22 @@
                     <span>Payment Gateway</span>
                 </div>
 
+                <div class="archimate-element application-layer" id="el-shipping-service" style="top: 300px; left: 300px;">
+                    <i class="fa-solid fa-truck-fast"></i>
+                    <span>Shipping Service</span>
+                </div>
+
                 <div class="archimate-element technology-layer" id="el-database" style="top: 150px; left: 800px;">
                     <i class="fa-solid fa-database"></i>
                     <span>Customer DB</span>
                 </div>
                 
-                <div class="archimate-element grouping" id="el-online" style="top: 100px; left: 275px; width: 500px; height: 270px;">
+                <div class="archimate-element grouping" style="top: 100px; left: 275px; width: 500px; height: 270px;">
                     <div class="group-label">Online Application</div>
                 </div>
 
-                <!-- SVG for drawing relationship lines and arrows -->
                 <svg>
-                    <!-- Arrowhead Definitions -->
                     <defs>
-                        <!-- Triggering/Flow -->
                         <marker id="arrow-triggering" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
                             <path d="M 0 0 L 10 5 L 0 10 z" class="arrow-head"></path>
                         </marker>
@@ -314,7 +313,6 @@
                             <path d="M 0 0 L 10 5 L 0 10 z" class="arrow-head-highlight"></path>
                         </marker>
 
-                        <!-- Realization -->
                         <marker id="arrow-realization" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
                             <path d="M 0 0 L 10 5 L 0 10 L 2 5 z" fill="white" stroke="#333" stroke-width="1"></path>
                         </marker>
@@ -323,17 +321,16 @@
                         </marker>
                     </defs>
 
-                    <!-- Relationship Lines -->
                     <line class="archimate-relationship" data-source="el-customer" data-target="el-web-shop" x1="190" y1="185" x2="300" y2="185" marker-end="url(#arrow-triggering)"></line>
                     <line class="archimate-relationship" data-source="el-web-shop" data-target="el-order-service" x1="440" y1="185" x2="550" y2="185" marker-end="url(#arrow-triggering)"></line>
                     <line class="archimate-relationship composition" data-source="el-order-service" data-target="el-payment-gateway" x1="620" y1="220" x2="620" y2="300" marker-end="url(#arrow-triggering)"></line>
                     <line class="archimate-relationship realization" data-source="el-order-service" data-target="el-database" x1="690" y1="185" x2="800" y2="185" marker-end="url(#arrow-realization)"></line>
+                    <line class="archimate-relationship" data-source="el-order-service" data-target="el-shipping-service" x1="550" y1="220" x2="440" y2="300" marker-end="url(#arrow-triggering)"></line>
                 </svg>
 
             </div>
         </main>
 
-        <!-- RIGHT: Properties Panel -->
         <aside class="sidebar" id="properties-panel">
             <h2>Properties</h2>
             <p id="properties-placeholder">Select an element to view its details.</p>
@@ -385,17 +382,17 @@
                     layer: 'Application',
                     documentation: 'An external or internal component that securely handles payment processing via credit cards, PayPal, etc.'
                 },
+                'el-shipping-service': {
+                    name: 'Shipping Service',
+                    type: 'Application Service',
+                    layer: 'Application',
+                    documentation: 'A dedicated service handling the logistics and tracking of product shipments to customers.'
+                },
                 'el-database': {
                     name: 'Customer DB',
                     type: 'Technology Service',
                     layer: 'Technology',
                     documentation: 'The database system that stores all customer, product, and order information. Provides data storage and retrieval services.'
-                },
-                'el-online': {
-                    name: 'Online Application',
-                    type: 'Grouping',
-                    layer: 'Application',
-                    documentation: 'This grouping represents the core set of application components and services that collectively form the customer-facing e-commerce platform. Webshop UI, Order Service, Payment Gateway.'
                 }
             };
 
